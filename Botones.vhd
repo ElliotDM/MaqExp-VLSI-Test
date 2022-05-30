@@ -5,10 +5,11 @@ use ieee.std_logic_unsigned.all;
 
 entity Botones is
 	port (
-		clk     : in  std_logic;
-		rst     : in  std_logic;
-		btn     : in  std_logic;
-		display : out std_logic_vector(6 downto 0)
+		clk      : in  std_logic;
+		rst      : in  std_logic;
+		btn1     : in  std_logic;
+		btn5     : in  std_logic;
+		display1 : out std_logic_vector(6 downto 0)
 	);
 end Botones;
 
@@ -25,27 +26,44 @@ architecture rtl of Botones is
 			result  : OUT STD_LOGIC); --debounced signal
 	end component;
 	
-	signal res : std_logic := '0';
-	signal cuenta : integer := 0;
+	signal res1, res5 : std_logic := '0';
+	signal cuenta1, cuenta5 : integer range 0 to 15 := 15;
+	signal total : integer range 0 to 15 := 0;
 
 begin
 
 	B1 : debounce generic map(50_000_000, 10)
-		port map(clk, rst, btn, res);
+		port map(clk, rst, btn1, res1);
 	
-	process(res) is
+	B5 : debounce generic map(50_000_000, 10)
+		port map(clk, rst, btn5, res5);
+	
+	process(res1) is -- Boton moneda de $1
 	begin
-		if rising_edge(res) then
-			if cuenta <= 9 then
-				cuenta <= cuenta + 1;
+		if rising_edge(res1) then
+			if cuenta1 = 15 then
+				cuenta1 <= 0;
 			else
-				cuenta <= 0;
+				cuenta1 <= cuenta1 + 1;
 			end if;
 		end if;
 	end process;
 	
-	with cuenta select
-		display <= "1000000" when 0,
+	process(res5) is -- Boton moneda de $5
+	begin
+		if rising_edge(res5) then
+			if cuenta5 = 15 then
+				cuenta5 <= 0;
+			else
+				cuenta5 <= cuenta5 + 5;
+			end if;
+		end if;
+	end process;
+	
+	total <= cuenta1 + cuenta5;
+	
+	with total select
+		display1 <= "1000000" when 0,
 			"1111001" when 1,
 			"0100100" when 2,
 			"0110000" when 3,
@@ -55,6 +73,11 @@ begin
 			"1111000" when 7,
 			"0000000" when 8,
 			"0010000" when 9,
-			"1000000" when others;
+			"0001000" when 10,--a
+			"0000011" when 11,--b 
+			"1000110" when 12,--c
+			"0100001" when 13,--d
+			"0000110" when 14,--e
+			"0001110" when 15;--f
 	
 end rtl;
